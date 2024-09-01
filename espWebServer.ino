@@ -4,10 +4,12 @@
 #include <DNSServer.h>
 #include <WebServer.h>
 
+#define Rele4 4
 #define Led  2
 
 
 /***INSTANCIANDO OBJETOS***********************************************************************************************************************************/
+
 
 // Configuraçoes e Endereço de Internet WIFI
 WiFiServer server                (8090);
@@ -24,13 +26,14 @@ const long timeoutTime = 2000;
 WiFiManager wifiManager;
 
 // Status para controle de Led
-int Status_Led = LOW; 
+int Status_Led = LOW;
+int Estado_Do_Rele4 = LOW;
 
 /*************************************************************************************************************************************/
 void setup() {
   Serial.begin(115200);
   Serial.println("Configurar Rede Wifi");
-  //  SETUP -- wifi -- ////////////////////////////
+  //  SETUP -- wifi -- //
   wifiManager.autoConnect("esp32", "12345678");
   //wifiManager.resetSettings ();   // Apaga todas redes Salvas do Wifi
   delay(150);
@@ -44,11 +47,13 @@ void setup() {
     delay(150);
     server.begin();
   }
-  //*** SETUP -- Definição dos Pinos -- //////////
+  //SETUP -- Definição dos Pinos -- //
   delay(50);
   pinMode(Led,   OUTPUT);
+  pinMode(Rele4, OUTPUT);
   // Iniciam em LOW -> Desligados
   digitalWrite(Led,   LOW);
+  digitalWrite(Rele4,   LOW);
 }
 
 
@@ -84,12 +89,17 @@ void setup() {
               Status_Led =! Status_Led;
               digitalWrite(Led, Status_Led);
             }
+            if (header.indexOf("GET /T1") >= 0) {
+              Estado_Do_Rele4 =! Estado_Do_Rele4;
+              digitalWrite(Rele4, Estado_Do_Rele4);
+            }
 
             // DEFINIÇÕES - CORPO - CÓDIGO PÁGINA HTML *****************************************************
 
             //**************************************************
             // Exibir a página da web em HTML
-            client.println("<!DOCTYPE html><html>");
+            client.println("<!DOCTYPE html><html lang=\"pt-BR\">");
+            client.println("<head><meta charset=\"UTF-8\">");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
             client.println("<link rel=\"icon\" href=\"data:,\">");
             client.println("<title> E-Green </title>");                     // Titulo do topo da Pagina
@@ -105,18 +115,26 @@ void setup() {
 
             //**************************************************
             // Título da página da web
-            client.println("<body>    <h1>E-Green</h1> <h3> Controle e automação </h3>");
+            client.println("<body>    <h1>E-Green</h1> <h3> Controle </h3>");
 
-
+            
             // Atualização do HTML ************************************************
+            
             if (Status_Led) {
               client.print("<a href=\"/L1\"><button class=\"button\">LED-ON</button></a>");
             } else {
               client.print("<a href=\"/L1\"><button class=\"button button2\">LED-OFF</button></a>");
-            }       
+            }
+
+            if (Estado_Do_Rele4) {
+              client.print("<a href=\"/T1\"><button class=\"button button2\">RELE-OFF</button></a>");
+            } else {
+              client.print("<a href=\"/T1\"><button class=\"button\">RELE-ON</button></a>");
+            } 
+                   
             client.println("<P>");
 
-            client.println("E-Green");
+            client.println("E-Green - Controle e Automações");
             client.println("<P>");
 
             client.println("</body></html>");
